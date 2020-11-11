@@ -125,7 +125,6 @@ def detect_video(video_path):
                 cv2.putText(frame, label, (x, y-2), font, 1, color, 2)
     
         counts += 1
-        # cv2.imshow('detection', frame)
         writer.write(frame)
 
     cap.release()
