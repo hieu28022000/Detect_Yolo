@@ -7,7 +7,6 @@ import time
 import glob
 
 from numba import cuda 
-from timeit import default_timer as timer  
 
 net = cv2.dnn.readNet("Cat_Dog.weights", "Cat_Dog.cfg")
 output_path = os.path.join("output", "out_img.jpg")
@@ -136,7 +135,8 @@ def detect_video(video_path):
 if __name__ == '__main__':
     if not os.path.exists("output"):
         os.mkdir("output")
-    cuda.select_device(0)
+    
+    cuda.select_device(0)   # If use GPU
 
     # Detect video
     # detect_video('input/cat_1.MOV')
@@ -145,5 +145,5 @@ if __name__ == '__main__':
     # image, image_path = detect_image(cv2.imread('input/cat_1.jpg'))
     # cv2.imshow('Images', image)
     
-    cuda.close()
-    # cv2.waitKey(0)
+    cuda.close()            # If use GPU
+    cv2.waitKey(0)
