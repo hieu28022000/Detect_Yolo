@@ -6,7 +6,7 @@ import imutils
 import time
 import glob
 
-from numba import cuda 
+from numba import cuda # If use GPU
 
 net = cv2.dnn.readNet("Cat_Dog.weights", "Cat_Dog.cfg")
 output_path = os.path.join("output", "out_img.jpg")
