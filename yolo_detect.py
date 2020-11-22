@@ -12,7 +12,6 @@ net = cv2.dnn.readNet("Cat_Dog.weights", "Cat_Dog.cfg")
 output_path = os.path.join("output", "out_img.jpg")
 # Name custom object
 classesFile = "obj.names";
-
 classes = None
 with open(classesFile, 'rt') as f:
     classes = f.read().rstrip('\n').split('\n')
@@ -20,6 +19,47 @@ with open(classesFile, 'rt') as f:
 layer_names = net.getLayerNames()
 output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 colors = np.random.uniform(0, 255, size=(len(classes), 3))
+
+def nms(bounding_boxes, confidence_score, threshold):
+    if len(bounding_boxes) == 0:
+        return [], []
+    boxes = np.array(bounding_boxes)
+
+    start_x = boxes[:, 0]
+    start_y = boxes[:, 1]
+    end_x = boxes[:, 2] + start_x 
+    end_y = boxes[:, 3] + start_y 
+
+    score = np.array(confidence_score)
+
+    picked_boxes = []
+    picked_score = []
+
+    areas = (end_x - start_x + 1) * (end_y - start_y + 1)
+
+    order = np.argsort(score)
+
+    while order.size > 0:
+        index = order[-1]
+
+        picked_boxes.append(bounding_boxes[index])
+        picked_score.append(confidence_score[index])
+
+        x1 = np.maximum(start_x[index], start_x[order[:-1]])
+        x2 = np.minimum(end_x[index], end_x[order[:-1]])
+        y1 = np.maximum(start_y[index], start_y[order[:-1]])
+        y2 = np.minimum(end_y[index], end_y[order[:-1]])
+
+        w = np.maximum(0.0, x2 - x1 + 1)
+        h = np.maximum(0.0, y2 - y1 + 1)
+        intersection = w * h
+
+        ratio = intersection / (areas[index] + areas[order[:-1]] - intersection)
+
+        left = np.where(ratio < threshold)
+        order = order[left]
+
+    return picked_boxes, picked_score
 
 def detect_image(img):
 
@@ -49,7 +89,7 @@ def detect_image(img):
                 boxes.append([x, y, w, h])
                 confidences.append(float(confidence))
                 class_ids.append(class_id)
-
+    boxes, confidences = nms(boxes, confidences, 0.4)
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
     font = cv2.FONT_HERSHEY_PLAIN
     for i in range(len(boxes)):
@@ -113,7 +153,7 @@ def detect_video(video_path):
                     boxes.append([x, y, w, h])
                     confidences.append(float(confidence))
                     class_ids.append(class_id)
-
+        boxes, confidences = nms(boxes, confidences, 0.4)
         indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
         font = cv2.FONT_HERSHEY_PLAIN
         for i in range(len(boxes)):
